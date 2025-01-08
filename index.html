@@ -1,13 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Human Machine </title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Minting Page</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>NFT Minting Page</h1>
+    
+    <div class="test-section">
+        <h2>Connect Wallet</h2>
+        <button onclick="connectWallet()">Connect MetaMask</button>
+        <p id="walletAddress"></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Mint NFT</h2>
+        <input type="text" id="tokenURI" placeholder="Enter token URI">
+        <button onclick="mintNFT()">Mint NFT</button>
+        <p id="mintingStatus"></p>
+    </div>
+
+    <script>
+        let contract;
+        let signer;
+        
+        const CONTRACT_ADDRESS = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+        const CONTRACT_ABI = [
+            "function mintNFT(address recipient, string memory tokenURI) public returns (uint256)"
+        ];
+
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    
+                    // Initialize contract
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    
+                    document.getElementById('walletAddress').textContent = 
+                        `Connected: ${accounts[0]}`;
+                } catch (error) {
+                    console.error("Error connecting wallet:", error);
+                }
+            } else {
+                alert('Please install MetaMask!');
+            }
+        }
+
+        async function mintNFT() {
+            if (!contract || !signer) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+
+            const tokenURI = document.getElementById('tokenURI').value;
+            if (!tokenURI) {
+                alert('Please enter a token URI!');
+                return;
+            }
+
+            try {
+                const address = await signer.getAddress();
+                const tx = await contract.mintNFT(address, tokenURI);
+                
+                document.getElementById('mintingStatus').textContent = 
+                    'Minting in progress... Please wait for confirmation.';
+                
+                await tx.wait();
+                
+                document.getElementById('mintingStatus').textContent = 
+                    'NFT minted successfully!';
+            } catch (error) {
+                console.error("Error minting NFT:", error);
+                document.getElementById('mintingStatus').textContent = 
+                    'Error minting NFT. Check console for details.';
+            }
+        }
+    </script>
+</body>
 </html>
