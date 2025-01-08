@@ -46,23 +46,28 @@
         ];
 
         async function connectWallet() {
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    // Request account access
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    
-                    // Initialize contract
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                    
-                    document.getElementById('walletAddress').textContent = 
-                        `Connected: ${accounts[0]}`;
-                } catch (error) {
-                    console.error("Error connecting wallet:", error);
+            try {
+                // Check if MetaMask is installed
+                if (typeof window.ethereum === 'undefined') {
+                    alert('Please install MetaMask first.');
+                    return;
                 }
-            } else {
-                alert('Please install MetaMask!');
+
+                // Request account access
+                await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                // Initialize contract
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                
+                document.getElementById('walletAddress').textContent = 
+                    `Connected: ${window.ethereum.selectedAddress}`;
+            } catch (error) {
+                console.error('Error connecting to MetaMask:', error);
             }
         }
 
